@@ -85,3 +85,15 @@ ai:
 
 n8n:
   base-url: "http://175.197.41.64:34567/webhook-test"
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+    stack:
+      auto: false

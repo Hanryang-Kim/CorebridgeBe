@@ -3,6 +3,7 @@ package com.halo.core_bridge.api.pdf.controller;
 import com.halo.core_bridge.api.pdf.contents.SwaggerPdfContents;
 import com.halo.core_bridge.api.pdf.model.dto.PdfDto;
 import com.halo.core_bridge.api.pdf.service.LocalPdfService;
+import com.halo.core_bridge.api.pdf.service.S3Service;
 import com.halo.core_bridge.api.users.model.dto.UserDto;
 import com.halo.core_bridge.common.exception.BaseException;
 import com.halo.core_bridge.common.model.BaseResponse;
@@ -17,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,6 +37,8 @@ import static com.halo.core_bridge.common.model.BaseResponseStatus.PDF_NOT_FOUND
 public class PdfController {  // 클래스명 오타 수정: PdfContorller -> PdfController
 
     private final LocalPdfService pdfService;
+    private final S3Service s3Service;
+
 
     @PostMapping
     public ResponseEntity<BaseResponse> register(
@@ -130,36 +134,35 @@ public class PdfController {  // 클래스명 오타 수정: PdfContorller -> Pd
             }
     )
     @GetMapping("/download/{resumeId}")
-    public ResponseEntity<Resource> download(@PathVariable Long resumeId) {
+    public ResponseEntity<Void> download(@PathVariable Long resumeId) {
         PdfDto.PdfResponseDto pdf = pdfService.findByResumeId(resumeId);
-        Resource resource = pdfService.downloadPdf(pdf.getId());
-
-        String safeFilename = "resume_" + resumeId + ".pdf";
-
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .contentLength(resource.contentLength())  // 🔧 이 줄 추가!
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + safeFilename + "\"")
-                    .body(resource);
-        } catch (IOException e) {
-            throw BaseException.from(PDF_NOT_FOUND);
-        }
+        String s3Url = "https://core-bridge-pdf.s3.ap-northeast-2.amazonaws.com/" + pdf.getSavedPath();
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, s3Url)
+                .build();
     }
 
     @GetMapping("/view/{resumeId}")
-    public ResponseEntity<Resource> viewPdf(@PathVariable Long resumeId) {
+    public ResponseEntity<BaseResponse<String>> viewPdf(@PathVariable Long resumeId) {
         PdfDto.PdfResponseDto pdf = pdfService.findByResumeId(resumeId);
-        Resource resource = pdfService.downloadPdf(pdf.getId());
+        String s3Url = "https://core-bridge-pdf.s3.ap-northeast-2.amazonaws.com/" + pdf.getSavedPath();
+        return ResponseEntity.ok(BaseResponse.success(s3Url));
+    }
 
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .contentLength(resource.contentLength())  // 🔧 이 줄 추가!
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                    .body(resource);
-        } catch (IOException e) {
-            throw BaseException.from(PDF_NOT_FOUND);
-        }
+    @GetMapping("/presigned-url")
+    public ResponseEntity<BaseResponse<String>> getPresignedUrl(
+            @RequestParam String directory,
+            @RequestParam String filename
+    ) {
+        String presignedUrl = s3Service.generatePresignedUrl(directory, filename);
+        return ResponseEntity.ok(BaseResponse.success(presignedUrl));
+    }
+
+    @PostMapping("/s3")
+    public ResponseEntity<BaseResponse<String>> saveS3Pdf(
+            @RequestBody PdfDto.S3SaveRequest request
+    ) {
+        pdfService.saveS3Pdf(request);
+        return ResponseEntity.ok(BaseResponse.success("저장 완료"));
     }
 }

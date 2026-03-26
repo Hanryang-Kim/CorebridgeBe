@@ -37,7 +37,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "https://www.core-bridge.co.kr"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://www.core-bridge.co.kr",
+                "https://core-bridge.kr",
+                "https://www.core-bridge.kr",
+                "http://corebridge-front.s3-website.ap-northeast-2.amazonaws.com"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
 
@@ -50,9 +56,7 @@ public class SecurityConfig {
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(
                 (auth) -> auth
-                        /* ===========================
-                         * permitAll()
-                         * =========================== */
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // 이거 추가
                         .requestMatchers(
                                 HttpMethod.POST, "/api/users"
                         ).permitAll()
@@ -73,8 +77,13 @@ public class SecurityConfig {
                          * =========================== */
                         .requestMatchers(
                                 HttpMethod.POST, "/api/pdf", "/api/image",
+                                "/api/pdf/s3",
                                 "/api/jobposts/*/applies",
                                 "/api/jobposts/*/applies/*/cover-letter-descriptions"
+                        ).hasRole("APPLICANT")
+
+                        .requestMatchers(
+                                HttpMethod.GET, "/api/pdf/presigned-url"
                         ).hasRole("APPLICANT")
 
                         .requestMatchers(

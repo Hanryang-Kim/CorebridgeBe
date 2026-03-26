@@ -13,19 +13,23 @@ public class CookieUtil {
     private static boolean cookieSecure;
 
     public static void createCookie(HttpServletResponse response,
-                              String cookieName,
-                              String cookieValue,
-                              boolean httpOnly,
-                              String path,
-                              int expire) {
+                                    String cookieName,
+                                    String cookieValue,
+                                    boolean httpOnly,
+                                    String path,
+                                    int expire) {
 
-        Cookie cookie = new Cookie(cookieName, cookieValue);
-        cookie.setHttpOnly(httpOnly);
-        cookie.setPath(path);
-        cookie.setMaxAge(expire);
-        cookie.setSecure(cookieSecure);
+        String cookieHeader = cookieName + "=" + cookieValue
+                + "; Max-Age=" + expire
+                + "; Path=" + path
+                + "; SameSite=None"
+                + "; Secure";
 
-        response.addCookie(cookie);
+        if (httpOnly) {
+            cookieHeader += "; HttpOnly";
+        }
+
+        response.addHeader("Set-Cookie", cookieHeader);
     }
 
     public static void addRefreshTokenCookie(HttpServletResponse response, String refreshToken, String cookieName, Long expire) {

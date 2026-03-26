@@ -1,6 +1,7 @@
 package com.halo.core_bridge.api.pdf.model.dto;
 
 import com.halo.core_bridge.api.pdf.model.entity.Pdf;
+import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -59,5 +60,16 @@ public class PdfDto {
                     .fileUrl("/" + entity.getSavedPath())
                     .build();
         }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class S3SaveRequest {
+        private Long resumeId;
+        private String savedPath;
+        private String originalFilename;
+        private Long fileSize;
+        private String contentType;
     }
 }

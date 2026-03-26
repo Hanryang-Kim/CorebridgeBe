@@ -156,4 +156,27 @@ public class LocalPdfService implements PdfService {
         }
         return sb.toString();
     }
+
+
+    @Override
+    @Transactional
+    public void saveS3Pdf(PdfDto.S3SaveRequest request) {
+        Resume resume = resumeService.findById(request.getResumeId());
+
+        // 기존 pdf가 있으면 완전히 삭제
+        pdfRepository.findByResumeIdAndIsDeletedFalse(request.getResumeId())
+                .ifPresent(pdf -> pdfRepository.delete(pdf));
+
+        pdfRepository.flush();
+
+        Pdf entity = Pdf.builder()
+                .originalFilename(request.getOriginalFilename())
+                .savedPath(request.getSavedPath())
+                .fileSize(request.getFileSize())
+                .contentType(request.getContentType())
+                .resume(resume)
+                .build();
+
+        pdfRepository.save(entity);
+    }
 }

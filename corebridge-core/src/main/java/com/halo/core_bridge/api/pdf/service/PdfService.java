@@ -14,4 +14,7 @@ public interface PdfService {
 
     Resource downloadPdf(Long id) throws BaseException;
 
+    void saveS3Pdf(PdfDto.S3SaveRequest request);
+
+
 }
