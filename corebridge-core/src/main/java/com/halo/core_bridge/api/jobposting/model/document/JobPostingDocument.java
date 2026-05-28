@@ -8,6 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,32 +19,33 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Document(indexName = "job_postings")
+@Setting(settingPath = "elasticsearch/job-posting-settings.json")
 public class JobPostingDocument {
 
     @Id
     @Field(name = "id", type = FieldType.Keyword)
     private Long id;
 
-    @Field(type = FieldType.Text, name = "title")
+    @Field(type = FieldType.Text, name = "title", analyzer = "nori")
     private String title;
 
     @JsonProperty("@timestamp")
     @Field(name = "@timestamp", type = FieldType.Date)
     private String timestamp;
 
-    @Field(name = "summary", type = FieldType.Text)
+    @Field(name = "summary", type = FieldType.Text, analyzer = "nori")
     private String summary;
 
-    @Field(name = "requirements", type = FieldType.Text)
+    @Field(name = "requirements", type = FieldType.Text, analyzer = "nori")
     private String requirements;
 
-    @Field(name = "preferred", type = FieldType.Text)
+    @Field(name = "preferred", type = FieldType.Text, analyzer = "nori")
     private String preferred;
 
-    @Field(name = "responsibilities", type = FieldType.Text)
+    @Field(name = "responsibilities", type = FieldType.Text, analyzer = "nori")
     private String responsibilities;
 
-    @Field(name = "department_name", type = FieldType.Text)
+    @Field(name = "department_name", type = FieldType.Text, analyzer = "nori")
     private String departmentName;
 
     @Field(name = "apply_start_date", type = FieldType.Date)
